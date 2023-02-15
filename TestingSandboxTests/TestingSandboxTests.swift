@@ -5,23 +5,40 @@
 //  Created by Yoli on 07/02/2023.
 @testable import TestingSandbox
 import XCTest
-//if you want to you could make the whole class @MainActor and now every test case insde there will now also run only on that main thread. 
+
+@MainActor
 final class TestingSandboxTests: XCTestCase {
     func test_failingThrows() throws {
         let sut = DataModel()
         try XCTAssertThrowsError(sut.goingToFail(), "The goingToFail method should have thrown an error.")
     
     }
-    //used if you know the test will be passed code the affects the UI nad therefore needs to be run on the main thread.
-    @MainActor
+
+   
     func test_failingAsyncThrows() async throws {
         let sut = DataModel()
         try await XCTAssertThrowsError( await sut.goingToFail(), "The goingToFail method should have thrown an error.")
         
     }
+    
+    func test_flagChangesArePublished() {
+        let sut = DataModel()
+        var flagChangePublished = false
+        
+        //we now look for the chnage announcement coming through. Can use _ for checker if you want to get rid of warning but that will mean it's not stored aywhere and then it'll crassh when we try running the code.
+        let checker = sut.objectWillChange.sink {
+            //when it you have changed tell me and do the below.
+            flagChangePublished = true
+        }
+        //so in the DataModel it starts false, when we run this method the below flips the flag in the the class, that makes the checker closer =kick in the which changes our local flagChangePublished variable.
+        sut.flag.toggle()
+        
+        //We can now assert.
+        XCTAssertTrue(flagChangePublished, "Flipping DataModal.flag should trigger a change notification.")
+    }
 }
 
-//so this is anothoer signature, why is this funciton loose outside the class.
+
 func XCTAssertThrowsError<T>(_ expression: @autoclosure () async throws -> T, _ message: @autoclosure () -> String = "", file: StaticString = #filePath, line: UInt = #line) async {
     if let _ = try? await expression() {
         XCTFail(message(), file: file, line: line)

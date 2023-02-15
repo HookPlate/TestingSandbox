@@ -8,8 +8,11 @@
 import SwiftUI
 
 class DataModel: ObservableObject {
+    //allows us to give example of testing with data that affects the UI
+    @Published var flag = false
+    
     func goingToFail() throws {
-       // throw CocoaError(.fileNoSuchFile)
+        throw CocoaError(.fileNoSuchFile)
     }
 
     func goingToFail() async throws {
