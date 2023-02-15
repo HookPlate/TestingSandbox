@@ -23,18 +23,8 @@ final class TestingSandboxTests: XCTestCase {
     
     func test_flagChangesArePublished() {
         let sut = DataModel()
-        var flagChangePublished = false
-        
-        //we now look for the chnage announcement coming through. Can use _ for checker if you want to get rid of warning but that will mean it's not stored aywhere and then it'll crassh when we try running the code.
-        let checker = sut.objectWillChange.sink {
-            //when it you have changed tell me and do the below.
-            flagChangePublished = true
-        }
-        //so in the DataModel it starts false, when we run this method the below flips the flag in the the class, that makes the checker closer =kick in the which changes our local flagChangePublished variable.
-        sut.flag.toggle()
-        
-        //We can now assert.
-        XCTAssertTrue(flagChangePublished, "Flipping DataModal.flag should trigger a change notification.")
+
+        XCTAssertSendsChangeNotification(sut.flag.toggle(), from: sut, "Flipping DataModel.flag should trigger a change notification.")
     }
 }
 
@@ -43,5 +33,18 @@ func XCTAssertThrowsError<T>(_ expression: @autoclosure () async throws -> T, _ 
     if let _ = try? await expression() {
         XCTFail(message(), file: file, line: line)
     }
+}
+
+func XCTAssertSendsChangeNotification<T, U: ObservableObject>(_ expression: @autoclosure () -> T, from object: U, _ message: @autoclosure () -> String = "", file: StaticString = #filePath, line: UInt = #line) {
+    var changePublished = false
+
+    let checker = object.objectWillChange.sink { _ in
+        changePublished = true
+    }
+
+    _ = checker
+    _ = expression()
+
+    XCTAssertTrue(changePublished, message(), file: file, line: line)
 }
 
